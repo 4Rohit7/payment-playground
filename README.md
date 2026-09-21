@@ -43,6 +43,32 @@ If processing fails the server returns 500, so Razorpay retries.
 Payment link callbacks are browser redirects, so `PUBLIC_BASE_URL=http://localhost:8080` works for them.
 
 ## 3. Test data per payment method
+## Test credentials (test mode only)
+
+### Card
+| Field | Value |
+|---|---|
+| Card number | `5180 2872 0009 1001` |
+| Expiry | `12/30` (or any future date) |
+| CVV | `123` |
+| OTP on bank page | `123456` |
+
+> ⚠️ When Checkout asks **"Save card / Secure my card"**, always pick **"Maybe later"**.
+> If it still asks for an OTP, enter `123456`.
+
+### UPI
+| VPA | Result |
+|---|---|
+| `success@razorpay` | Succeeds |
+| `failure@razorpay` | Fails |
+
+> ℹ️ After entering the UPI ID, a QR appears briefly and the payment auto-accepts — no UPI app needed in test mode.
+
+### Netbanking and wallets
+Pick any bank or wallet — Razorpay shows a mock page with **Success** and **Failure** buttons. No real login needed.
+
+### For live mode
+Replace test keys with live keys and set `ALLOW_LIVE_KEYS=true`.
 
 | Method | How to test |
 |---|---|
