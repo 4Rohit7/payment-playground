@@ -1,32 +1,94 @@
-﻿services:
+﻿# Run everything with just:
+#   docker compose up -d
+# No cloning needed. Pulls the image from Docker Hub automatically.
+#
+# Required: set your Razorpay TEST keys as environment variables first:
+#   Windows PowerShell:
+#     $env:RAZORPAY_KEY_ID="rzp_test_xxx"
+#     $env:RAZORPAY_KEY_SECRET="xxx"
+#   Linux/Mac:
+#     export RAZORPAY_KEY_ID=rzp_test_xxx
+#     export RAZORPAY_KEY_SECRET=xxx
+#
+# Then: docker compose up -d
+# Open: http://localhost:8080/
+
+services:
   db:
     image: postgres:16-alpine
+    container_name: razorpay-db
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: razorpay_playground
     volumes:
       - pgdata:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+    networks:
+      - razorpay-net
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d razorpay_playground"]
       interval: 5s
       timeout: 3s
       retries: 10
+    restart: unless-stopped
 
   app:
     image: 4rohit7/payment-playground:latest
-    build: .
-    env_file: .env
+    container_name: razorpay-app
     environment:
-      DATABASE_URL: postgres://postgres:postgres@db:5432/razorpay_playground?sslmode=disable
+      PORT: "8080"
+      DATABASE_URL: postgres://postgres:postgres@razorpay-db:5432/razorpay_playground?sslmode=disable
+      RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID}
+      RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET}
+      RAZORPAY_WEBHOOK_SECRET: ${RAZORPAY_WEBHOOK_SECRET:-changeme_webhook_secret}
+      MERCHANT_NAME: ${MERCHANT_NAME:-Razorpay Playground}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:8080}
     ports:
-      - "8080:8080"
+      - "${PORT:-8080}:8080"
+    networks:
+      - razorpay-net
     depends_on:
       db:
         condition: service_healthy
     restart: unless-stopped
 
+networks:
+  razorpay-net:
+    driver: bridge
+
 volumes:
   pgdata:
+
+
+# services:
+#   db:
+#     image: postgres:16-alpine
+#     environment:
+#       POSTGRES_USER: postgres
+#       POSTGRES_PASSWORD: postgres
+#       POSTGRES_DB: razorpay_playground
+#     volumes:
+#       - pgdata:/var/lib/postgresql/data
+#     ports:
+#       - "5432:5432"
+#     healthcheck:
+#       test: ["CMD-SHELL", "pg_isready -U postgres -d razorpay_playground"]
+#       interval: 5s
+#       timeout: 3s
+#       retries: 10
+
+#   app:
+#     image: 4rohit7/payment-playground:latest
+#     build: .
+#     env_file: .env
+#     environment:
+#       DATABASE_URL: postgres://postgres:postgres@db:5432/razorpay_playground?sslmode=disable
+#     ports:
+#       - "8080:8080"
+#     depends_on:
+#       db:
+#         condition: service_healthy
+#     restart: unless-stopped
+
+# volumes:
+#   pgdata:
