@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Razorpay test console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<style>
+  :root {
+    --paper: #f3f5f2;
+    --surface: #ffffff;
+    --ink: #13231f;
+    --muted: #5b6b66;
+    --line: #d5ddd9;
+    --green: #0e6b4e;
+    --green-soft: #e3f1ea;
+    --red: #b42318;
+    --red-soft: #fbe9e7;
+    --brass: #a8761c;
+    --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #0f1a17; --surface: #16241f; --ink: #e6eeea; --muted: #97a8a2;
+      --line: #2a3b35; --green: #4fbf93; --green-soft: #173a2d; --red: #f08a7e;
+      --red-soft: #3a1d1a; --brass: #e0b25a;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); }
+
+  header {
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px 24px;
+    padding: 20px 28px; border-bottom: 1px solid var(--line);
+  }
+  header h1 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
+  #key-status { color: var(--muted); font-size: 14px; }
+  #key-status strong { color: var(--green); font-weight: 500; }
+  header .spacer { flex: 1; }
+
+  main {
+    display: grid; grid-template-columns: minmax(0, 520px) minmax(0, 1fr);
+    gap: 28px; padding: 24px 28px 48px; max-width: 1400px;
+  }
+  .flows { display: flex; flex-direction: column; gap: 20px; }
+
+  section { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px 20px; }
+  section h2 { margin: 0 0 4px; font-size: 17px; font-weight: 600; }
+  section p.hint { margin: 0 0 14px; color: var(--muted); font-size: 14px; }
+  section.primary { border-color: var(--green); box-shadow: inset 4px 0 0 var(--green); }
+
+  .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px 12px; margin-bottom: 12px; }
+  label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
+  input, select {
+    font: 15px var(--sans); color: var(--ink); background: var(--paper);
+    border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; min-width: 0;
+  }
+  input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible {
+    outline: 2px solid var(--green); outline-offset: 2px;
+  }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  button {
+    font: 500 14px var(--sans); border-radius: 6px; padding: 9px 14px; cursor: pointer;
+    border: 1px solid var(--green); background: var(--green); color: #fff;
+  }
+  button.secondary { background: transparent; color: var(--green); }
+  button:disabled { opacity: 0.55; cursor: progress; }
+
+  .result { margin-top: 12px; font-size: 14px; word-break: break-all; }
+  .result:empty { display: none; }
+  .result img { display: block; max-width: 220px; margin-top: 8px; border: 1px solid var(--line); border-radius: 6px; }
+
+  aside { position: sticky; top: 16px; align-self: start; display: flex; flex-direction: column; max-height: calc(100vh - 32px); }
+  .log-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; gap: 12px; }
+  .log-head h2 { margin: 0; font-size: 17px; font-weight: 600; }
+  .log-head .actions { align-items: center; }
+  #log { overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-bottom: 8px; }
+  #log:empty::before { content: "Requests and Razorpay responses appear here as you test."; color: var(--muted); }
+  .entry { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--line); border-radius: 6px; }
+  .entry.ok { border-left-color: var(--green); }
+  .entry.err { border-left-color: var(--red); background: var(--red-soft); }
+  .entry.pending { border-left-color: var(--brass); }
+  .entry summary { cursor: pointer; padding: 8px 12px; display: flex; gap: 10px; align-items: baseline; }
+  .entry summary time { color: var(--muted); font: 12px var(--mono); flex-shrink: 0; }
+  .entry pre { margin: 0; padding: 10px 12px 12px; font: 12.5px/1.5 var(--mono); overflow-x: auto; border-top: 1px solid var(--line); }
+
+  @media (max-width: 900px) {
+    main { grid-template-columns: 1fr; padding: 16px; }
+    header { padding: 16px; }
+    aside { position: static; max-height: none; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .entry { animation: arrive 180ms ease-out; }
+    @keyframes arrive { from { transform: translateY(-4px); opacity: 0; } }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Razorpay test console</h1>
+  <span id="key-status">Loading key…</span>
+  <span class="spacer"></span>
+  <button class="secondary" id="btn-methods">Show enabled methods</button>
+</header>
+
+<main>
+  <div class="flows">
+
+    <section class="primary">
+      <h2>Pay with Checkout</h2>
+      <p class="hint">Creates an order, opens Razorpay Checkout, then verifies the signature on the server. Pick a method to open Checkout straight on it.</p>
+      <form id="f-pay">
+        <div class="row">
+          <label>Amount (₹)<input name="amount" type="number" min="1" step="0.01" value="500" required></label>
+          <label>Method
+            <select name="method">
+              <option value="">Any (customer chooses)</option>
+              <option value="card">Card</option>
+              <option value="upi">UPI</option>
+              <option value="netbanking">Netbanking</option>
+              <option value="wallet">Wallet</option>
+              <option value="emi">EMI</option>
+              <option value="paylater">Pay later</option>
+            </select>
+          </label>
+        </div>
+        <div class="row">
+          <label>Name<input name="name" value="Test Customer"></label>
+          <label>Email<input name="email" type="email" value="test@example.com"></label>
+          <label>Phone<input name="contact" value="9999999999"></label>
+        </div>
+        <div class="actions"><button type="submit">Pay</button></div>
+      </form>
+      <div class="result" id="r-pay"></div>
+    </section>
+
+    <section>
+      <h2>Refund a payment</h2>
+      <p class="hint">Works on captured payments. Leave the amount empty for a full refund.</p>
+      <form id="f-refund">
+        <div class="row">
+          <label>Payment ID<input name="payment_id" id="refund-payment" placeholder="pay_..." required></label>
+          <label>Amount (₹)<input name="amount" type="number" min="1" step="0.01" placeholder="Full"></label>
+          <label>Speed
+            <select name="speed"><option value="normal">Normal</option><option value="optimum">Instant if possible</option></select>
+          </label>
+        </div>
+        <div class="actions">
+          <button type="submit">Refund payment</button>
+          <button type="button" class="secondary" id="btn-capture">Capture payment</button>
+        </div>
+      </form>
+    </section>
+
+    <section>
+      <h2>Payment link</h2>
+      <p class="hint">Open the link, pay in test mode, and Razorpay redirects back to this server's callback.</p>
+      <form id="f-link">
+        <div class="row">
+          <label>Amount (₹)<input name="amount" type="number" min="1" step="0.01" value="250" required></label>
+          <label>Description<input name="description" value="Test payment link"></label>
+        </div>
+        <div class="row">
+          <label>Customer email<input name="email" type="email" value="test@example.com"></label>
+          <label>Customer phone<input name="contact" value="9999999999"></label>
+        </div>
+        <div class="actions">
+          <button type="submit">Create payment link</button>
+          <button type="button" class="secondary" id="btn-link-status" disabled>Check link status</button>
+        </div>
+      </form>
+      <div class="result" id="r-link"></div>
+    </section>
+
+    <section>
+      <h2>UPI QR code</h2>
+      <p class="hint">Leave the amount empty to let the payer enter any amount.</p>
+      <form id="f-qr">
+        <div class="row">
+          <label>Amount (₹)<input name="amount" type="number" min="1" step="0.01" placeholder="Any amount"></label>
+          <label>Usage
+            <select name="usage"><option value="single_use">Single use</option><option value="multiple_use">Multiple use</option></select>
+          </label>
+        </div>
+        <div class="actions">
+          <button type="submit">Create QR code</button>
+          <button type="button" class="secondary" id="btn-qr-payments" disabled>Check QR payments</button>
+          <button type="button" class="secondary" id="btn-qr-close" disabled>Close QR code</button>
+        </div>
+      </form>
+      <div class="result" id="r-qr"></div>
+    </section>
+
+    <section>
+      <h2>Subscription</h2>
+      <p class="hint">Creates a plan and a subscription, then opens Checkout so you can authorise the mandate.</p>
+      <form id="f-sub">
+        <div class="row">
+          <label>Amount per cycle (₹)<input name="amount" type="number" min="1" step="0.01" value="199" required></label>
+          <label>Billing
+            <select name="period"><option value="monthly">Monthly</option><option value="weekly">Weekly</option><option value="daily">Daily</option><option value="yearly">Yearly</option></select>
+          </label>
+          <label>Cycles<input name="total_count" type="number" min="1" value="6" required></label>
+        </div>
+        <div class="actions"><button type="submit">Create plan and subscribe</button></div>
+      </form>
+      <div class="result" id="r-sub"></div>
+    </section>
+
+    <section>
+      <h2>Saved records</h2>
+      <p class="hint">What this server has stored in Postgres, including webhook deliveries.</p>
+      <div class="row">
+        <label>Table
+          <select id="local-resource">
+            <option>payments</option><option>orders</option><option>refunds</option>
+            <option>payment-links</option><option>qr-codes</option><option>subscriptions</option>
+            <option>plans</option><option>customers</option><option>webhook-events</option>
+          </select>
+        </label>
+      </div>
+      <div class="actions"><button type="button" class="secondary" id="btn-local">Show records</button></div>
+    </section>
+  </div>
+
+  <aside>
+    <div class="log-head">
+      <h2>Activity</h2>
+      <div class="actions"><button type="button" class="secondary" id="btn-clear">Clear</button></div>
+    </div>
+    <div id="log" aria-live="polite"></div>
+  </aside>
+</main>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const state = { cfg: null, linkId: null, qrId: null };
+
+const toPaise = (rupees) => Math.round(parseFloat(rupees) * 100);
+const rupees = (paise) => "₹" + (paise / 100).toLocaleString("en-IN", { minimumFractionDigits: 2 });
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function log(title, data, kind = "ok") {
+  const el = document.createElement("details");
+  el.className = "entry " + kind;
+  const t = new Date().toLocaleTimeString();
+  el.innerHTML = `<summary><time>${t}</time><span>${esc(title)}</span></summary><pre></pre>`;
+  el.querySelector("pre").textContent = JSON.stringify(data, null, 2);
+  if (kind === "err") el.open = true;
+  $("#log").prepend(el);
+}
+
+async function api(method, path, body) {
+  const res = await fetch(path, {
+    method,
+    headers: body ? { "Content-Type": "application/json" } : {},
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  let data = {};
+  try { data = await res.json(); } catch { /* empty body */ }
+  log(`${method} ${path} (${res.status})`, data, res.ok ? "ok" : "err");
+  if (!res.ok) throw new Error(data.error || res.statusText);
+  return data;
+}
+
+// Disable the submit button while a flow runs; errors are already in the log.
+function flow(form, fn) {
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const btn = form.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    try { await fn(Object.fromEntries(new FormData(form))); } catch (err) { console.error(err); }
+    finally { btn.disabled = false; }
+  });
+}
+function click(id, fn) {
+  $(id).addEventListener("click", async () => { try { await fn(); } catch (err) { console.error(err); } });
+}
+
+async function loadConfig() {
+  try {
+    state.cfg = await api("GET", "/api/config");
+    $("#key-status").innerHTML = state.cfg.test_mode
+      ? `Test mode with key <strong>${esc(state.cfg.key_id)}</strong>`
+      : `<strong style="color:var(--red)">Live key in use: ${esc(state.cfg.key_id)}</strong>`;
+  } catch {
+    $("#key-status").textContent = "Server not reachable. Start it with go run ./cmd/server";
+  }
+}
+
+function openCheckout(options) {
+  if (typeof Razorpay === "undefined") {
+    log("Checkout script did not load. Check your internet connection.", {}, "err");
+    return;
+  }
+  const rzp = new Razorpay({ key: state.cfg.key_id, name: state.cfg.merchant_name, theme: { color: "#0e6b4e" }, ...options });
+  rzp.on("payment.failed", (resp) => log("Payment failed in Checkout", resp.error, "err"));
+  rzp.open();
+}
+
+// ---------- Checkout ----------
+flow($("#f-pay"), async (v) => {
+  const order = await api("POST", "/api/orders", {
+    amount: toPaise(v.amount),
+    notes: { source: "test-console", chosen_method: v.method || "any" },
+  });
+  const prefill = { name: v.name, email: v.email, contact: v.contact };
+  if (v.method) prefill.method = v.method;
+
+  openCheckout({
+    amount: order.amount,
+    currency: order.currency,
+    description: "Test order " + order.receipt,
+    order_id: order.id,
+    prefill,
+    handler: async (resp) => {
+      log("Checkout returned", resp, "pending");
+      const result = await api("POST", "/api/payments/verify", resp);
+      $("#refund-payment").value = result.payment_id;
+      $("#r-pay").innerHTML = `Verified <strong>${esc(result.payment_id)}</strong> by ${esc(result.method)}, ${rupees(result.amount)}, status ${esc(result.status)}.`;
+    },
+    modal: { ondismiss: () => log("Checkout closed without paying", { order_id: order.id }, "pending") },
+  });
+});
+
+// ---------- Refund & capture ----------
+flow($("#f-refund"), async (v) => {
+  const body = { speed: v.speed };
+  if (v.amount) body.amount = toPaise(v.amount);
+  await api("POST", `/api/payments/${encodeURIComponent(v.payment_id)}/refunds`, body);
+});
+click("#btn-capture", async () => {
+  const id = $("#refund-payment").value.trim();
+  if (!id) return log("Enter a payment ID to capture", {}, "err");
+  await api("POST", `/api/payments/${encodeURIComponent(id)}/capture`);
+});
+
+// ---------- Payment link ----------
+flow($("#f-link"), async (v) => {
+  const link = await api("POST", "/api/payment-links", {
+    amount: toPaise(v.amount),
+    description: v.description,
+    customer: { email: v.email, contact: v.contact },
+    notify: { sms: false, email: false },
+  });
+  state.linkId = link.id;
+  $("#btn-link-status").disabled = false;
+  $("#r-link").innerHTML = `Link created: <a href="${esc(link.short_url)}" target="_blank" rel="noopener">${esc(link.short_url)}</a>`;
+});
+click("#btn-link-status", () => api("GET", `/api/payment-links/${state.linkId}`));
+
+// ---------- QR ----------
+flow($("#f-qr"), async (v) => {
+  const body = { usage: v.usage, fixed_amount: !!v.amount, description: "Test QR" };
+  if (v.amount) body.payment_amount = toPaise(v.amount);
+  const qr = await api("POST", "/api/qr-codes", body);
+  state.qrId = qr.id;
+  $("#btn-qr-payments").disabled = false;
+  $("#btn-qr-close").disabled = false;
+  $("#r-qr").innerHTML = `QR <strong>${esc(qr.id)}</strong> is ${esc(qr.status)}.<img src="${esc(qr.image_url)}" alt="UPI QR code">`;
+});
+click("#btn-qr-payments", () => api("GET", `/api/qr-codes/${state.qrId}/payments`));
+click("#btn-qr-close", () => api("POST", `/api/qr-codes/${state.qrId}/close`));
+
+// ---------- Subscription ----------
+flow($("#f-sub"), async (v) => {
+  const plan = await api("POST", "/api/plans", {
+    period: v.period, interval: 1,
+    item: { name: "Test plan", amount: toPaise(v.amount), currency: "INR" },
+  });
+  const sub = await api("POST", "/api/subscriptions", { plan_id: plan.id, total_count: parseInt(v.total_count, 10) });
+  openCheckout({
+    subscription_id: sub.id,
+    description: `${rupees(plan.item.amount)} ${v.period}`,
+    prefill: { name: "Test Customer", email: "test@example.com", contact: "9999999999" },
+    handler: async (resp) => {
+      log("Checkout returned", resp, "pending");
+      const result = await api("POST", "/api/subscriptions/verify", resp);
+      $("#r-sub").innerHTML = `Subscription <strong>${esc(result.subscription_id)}</strong> is ${esc(result.status)}.`;
+    },
+  });
+});
+
+// ---------- Misc ----------
+click("#btn-methods", () => api("GET", "/api/methods"));
+click("#btn-local", () => api("GET", `/api/local/${$("#local-resource").value}`));
+click("#btn-clear", () => { $("#log").innerHTML = ""; });
+
+loadConfig();
+</script>
+</body>
+</html>
