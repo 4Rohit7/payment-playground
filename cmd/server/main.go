@@ -13,11 +13,11 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 
-	"razorpay-playground/internal/config"
-	"razorpay-playground/internal/db"
-	"razorpay-playground/internal/handlers"
-	"razorpay-playground/internal/razorpay"
-	"razorpay-playground/internal/store"
+	"payment-playground/internal/config"
+	"payment-playground/internal/db"
+	"payment-playground/internal/handlers"
+	"payment-playground/internal/razorpay"
+	"payment-playground/internal/store"
 )
 
 func main() {
@@ -42,7 +42,7 @@ func main() {
 	h := handlers.New(cfg, razorpay.NewClient(cfg.RazorpayKeyID, cfg.RazorpayKeySecret), store.New(pool))
 
 	app := fiber.New(fiber.Config{
-		AppName:      "razorpay-playground",
+		AppName:      "payment-playground",
 		ErrorHandler: handlers.ErrorHandler,
 	})
 	app.Use(recover.New())

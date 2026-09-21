@@ -10,7 +10,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
-	"razorpay-playground/internal/razorpay"
+	"payment-playground/internal/razorpay"
 )
 
 // RazorpayWebhook receives events configured in Dashboard > Webhooks.

@@ -3,7 +3,7 @@ package handlers
 import (
 	"github.com/gofiber/fiber/v2"
 
-	"razorpay-playground/internal/razorpay"
+	"payment-playground/internal/razorpay"
 )
 
 func (h *Handler) CreatePlan(c *fiber.Ctx) error {

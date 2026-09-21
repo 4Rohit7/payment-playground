@@ -6,7 +6,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
-	"razorpay-playground/internal/store"
+	"payment-playground/internal/store"
 )
 
 // ListLocal shows what is stored in Postgres, e.g. GET /api/local/payments?limit=20

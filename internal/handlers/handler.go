@@ -6,9 +6,9 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
-	"razorpay-playground/internal/config"
-	"razorpay-playground/internal/razorpay"
-	"razorpay-playground/internal/store"
+	"payment-playground/internal/config"
+	"payment-playground/internal/razorpay"
+	"payment-playground/internal/store"
 )
 
 type Handler struct {

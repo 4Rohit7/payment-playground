@@ -6,7 +6,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
-	"razorpay-playground/internal/razorpay"
+	"payment-playground/internal/razorpay"
 )
 
 func (h *Handler) CreatePaymentLink(c *fiber.Ctx) error {

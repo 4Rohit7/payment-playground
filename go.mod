@@ -1,4 +1,4 @@
-module razorpay-playground
+module payment-playground
 
 go 1.22
 

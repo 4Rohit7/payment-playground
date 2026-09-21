@@ -6,7 +6,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
-	"razorpay-playground/internal/razorpay"
+	"payment-playground/internal/razorpay"
 )
 
 // PublicConfig exposes only what a browser may know: the key id, never the secret.

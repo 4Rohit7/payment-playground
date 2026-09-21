@@ -10,7 +10,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"razorpay-playground/internal/razorpay"
+	"payment-playground/internal/razorpay"
 )
 
 type Store struct {
