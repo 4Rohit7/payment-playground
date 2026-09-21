@@ -29,7 +29,7 @@ func Load() (*Config, error) {
 		PublicBaseURL:         strings.TrimRight(env("PUBLIC_BASE_URL", "http://localhost:8080"), "/"),
 		CORSOrigins:           env("CORS_ORIGINS", "http://localhost:3000,http://localhost:5173"),
 		MerchantName:          env("MERCHANT_NAME", "Razorpay Playground"),
-		DatabaseURL:           os.Getenv("DATABASE_URL"),
+		DatabaseURL:           env("DATABASE_URL", "postgres://postgres:postgres@127.0.0.1:5432/razorpay_playground?sslmode=disable"),
 		RazorpayKeyID:         os.Getenv("RAZORPAY_KEY_ID"),
 		RazorpayKeySecret:     os.Getenv("RAZORPAY_KEY_SECRET"),
 		RazorpayWebhookSecret: os.Getenv("RAZORPAY_WEBHOOK_SECRET"),
@@ -37,7 +37,6 @@ func Load() (*Config, error) {
 
 	var missing []string
 	for _, kv := range [][2]string{
-		{"DATABASE_URL", c.DatabaseURL},
 		{"RAZORPAY_KEY_ID", c.RazorpayKeyID},
 		{"RAZORPAY_KEY_SECRET", c.RazorpayKeySecret},
 	} {
